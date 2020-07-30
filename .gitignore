@@ -1,0 +1,11 @@
+# dir
+__pycache__
+build
+.vscode
+*egg*
+
+# file
+*.o
+*.swp
+*.pyc
+*ninja*
