@@ -14,11 +14,11 @@
 import os, sys, glob
 import torch
 import os.path as osp
-from setuptools import setup, find_packages
+from setuptools import dist, setup, find_packages, Extension
 from torch.utils.cpp_extension import CUDAExtension, CppExtension, BuildExtension
 
-# run the version-script and get the '__version__' arg
-exec(open(osp.join("gorilla", "version.py")).read())
+# run the version-script and get the "__version__" arg
+# exec(open(osp.join("gorilla", "version.py")).read())
 
 requirements = [
     "numpy",
@@ -30,32 +30,74 @@ requirements = [
     "pynvml"
 ]
 
+def get_version():
+    version_file = osp.join("gorilla", "version.py")
+    with open(version_file, "r", encoding="utf-8") as f:
+        exec(compile(f.read(), version_file, "exec"))
+    return locals()["__version__"]
+
+def get_sources(module, surfix="*.c*"):
+    src_dir = osp.join(*module.split("."), "src")
+    return glob.glob(osp.join(src_dir, surfix))
+
+def make_extension(name, module):
+    if not torch.cuda.is_available(): return
+    extersion = CUDAExtension
+    return extersion(
+        name=".".join([module, name]),
+        sources=get_sources(module),
+        extra_compile_args={
+            "cxx": ["-O3"],
+            "nvcc": [
+                "-D__CUDA_NO_HALF_OPERATORS__",
+                "-D__CUDA_NO_HALF_CONVERSIONS__",
+                "-D__CUDA_NO_HALF2_OPERATORS__",
+            ],
+        },
+        define_macros=[("WITH_CUDA", None)]
+    )
+
 def get_extensions():
     extensions = []
-    ext_name = "gorilla._ext"
-    if torch.cuda.is_available():
-        op_files = glob.glob(osp.join(".", "gorilla", "lib", "gpu", "*"))
-        extension = CUDAExtension
-    else:
-        print(f"Compiling {ext_name} without CUDA")
-        op_files = glob.glob(osp.join(".", "gorilla", "lib", "cpu", "*"))
-        extension = CppExtension
 
-        ext_ops = extension(
-            name=ext_name,
-            sources=op_files,
-            extra_compile_args={
-                "cxx": ["-g"],
-                "nvcc": ["-O2"]
-            }
-        )
-        extensions.append(ext_ops)
-    return extension
+    if torch.cuda.is_available():
+        extension = CUDAExtension
+    
+        extensions = [
+            make_extension(
+                name="compiling_info",
+                module="gorilla.ops.utils"),
+            make_extension(
+                name="iou3d_cuda",
+                module="gorilla.ops.iou3d"),
+            make_extension(
+                name="voxel_layer",
+                module="gorilla.ops.voxel"),
+            make_extension(
+                name="roiaware_pool3d_ext",
+                module="gorilla.ops.roiaware_pool3d"),
+            make_extension(
+                name="ball_query_ext",
+                module="gorilla.ops.ball_query"),
+            make_extension(
+                name="group_points_ext",
+                module="gorilla.ops.group_points"),
+            make_extension(
+                name="interpolate_ext",
+                module="gorilla.ops.interpolate"),
+            make_extension(
+                name="furthest_point_sample_ext",
+                module="gorilla.ops.furthest_point_sample"),
+            make_extension(
+                name="gather_points_ext",
+                module="gorilla.ops.gather_points")
+        ]
+    return extensions
 
 if __name__ == "__main__":
     setup(
         name = "gorilla",
-        version = __version__,
+        version = get_version(),
         author = "Zhihao Liang",
         author_mail = "mszhihaoliang@mail.scut.edu.cn",
         url = "https://github.com/lzhnb/GorillaTorch",
@@ -66,4 +108,5 @@ if __name__ == "__main__":
         packages=find_packages(exclude=["tests"]),
         ext_modules=get_extensions(),
         cmdclass={"build_ext": BuildExtension},
+        zip_safe=False
     )
