@@ -3,8 +3,10 @@ __pycache__
 build
 .vscode
 *egg*
+dist
 
 # file
+*.so
 *.o
 *.swp
 *.pyc

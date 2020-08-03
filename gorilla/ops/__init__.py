@@ -9,9 +9,10 @@ from .roiaware_pool3d import (RoIAwarePool3d, points_in_boxes_batch,
 from .utils import get_compiler_version, get_compiling_cuda_version
 from .voxel import DynamicScatter, Voxelization, dynamic_scatter, voxelization
 
+# modify from mmdetection3s https://github.com/open-mmlab/mmdetection3d
 __all__ = [
     "soft_nms", "get_compiler_version",
-    "get_compiling_cuda_version", "batched_nms", "Voxelization", "voxelization",
+    "batched_nms", "Voxelization", "voxelization",
     "dynamic_scatter", "DynamicScatter",
     "RoIAwarePool3d", "points_in_boxes_gpu", "points_in_boxes_cpu",
     "ball_query", "furthest_point_sample",
