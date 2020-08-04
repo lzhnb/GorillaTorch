@@ -11,7 +11,9 @@
 
 #!/usr/bin/env python
 
-import os, sys, glob
+import os
+import sys
+import glob
 import torch
 import os.path as osp
 from setuptools import dist, setup, find_packages, Extension
@@ -21,13 +23,21 @@ from torch.utils.cpp_extension import CUDAExtension, CppExtension, BuildExtensio
 # exec(open(osp.join("gorilla", "version.py")).read())
 
 requirements = [
+    "addict",
+    "yapf",
     "numpy",
     "tqdm",
     "open3d",
     "torch>=1.0.0",
     "torchvision>=0.5.0",
     "gpustat",
-    "pynvml"
+    "pynvml",
+    "numba",
+    "pyyaml",
+    "terminaltables",
+    "lyft_dataset_sdk",
+    "pycocotools",
+    "nuscenes-devkit",
 ]
 
 def get_version():
@@ -68,6 +78,9 @@ def get_extensions():
                 name="compiling_info",
                 module="gorilla.ops.utils"),
             make_extension(
+                name="nms_ext",
+                module="gorilla.ops.nms"),
+            make_extension(
                 name="iou3d_cuda",
                 module="gorilla.ops.iou3d"),
             make_extension(
@@ -90,7 +103,35 @@ def get_extensions():
                 module="gorilla.ops.furthest_point_sample"),
             make_extension(
                 name="gather_points_ext",
-                module="gorilla.ops.gather_points")
+                module="gorilla.ops.gather_points"),
+            make_extension(
+                name='roi_align_ext',
+                module='gorilla.ops.roi_align'),
+            make_extension(
+                name='roi_pool_ext',
+                module='gorilla.ops.roi_pool'),
+            # TODO: fix compile bug
+            # make_extension(
+            #     name='deform_conv_ext',
+            #     module='gorilla.ops.dcn'),
+            # make_extension(
+            #     name='deform_pool_ext',
+            #     module='gorilla.ops.dcn'),
+            make_extension(
+                name='sigmoid_focal_loss_ext',
+                module='gorilla.ops.sigmoid_focal_loss'),
+            make_extension(
+                name='masked_conv2d_ext',
+                module='gorilla.ops.masked_conv'),
+            # make_extension(
+            #     name='carafe_ext',
+            #     module='gorilla.ops.carafe'),
+            # make_extension(
+            #     name='carafe_naive_ext',
+            #     module='gorilla.ops.carafe'),
+            make_extension(
+                name='corner_pool_ext',
+                module='gorilla.ops.corner_pool'),
         ]
     return extensions
 
